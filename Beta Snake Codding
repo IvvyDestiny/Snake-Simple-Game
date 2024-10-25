@@ -1,0 +1,114 @@
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <algorithm>
+
+const int INITIAL_TAIL = 4;
+bool fixedTail = true;
+int tileCount = 10;
+int gridSize = 400 / tileCount;
+
+struct Position {
+    int x, y;
+};
+
+Position INITIAL_PLAYER = { tileCount / 2, tileCount / 2 };
+Position velocity = {0, 0};
+Position player = { INITIAL_PLAYER.x, INITIAL_PLAYER.y };
+Position fruit = {1, 1};
+std::vector<Position> trail;
+int tail = INITIAL_TAIL;
+int points = 0;
+int pointsMax = 0;
+enum class ActionEnum { none, up, down, left, right };
+ActionEnum lastAction = ActionEnum::none;
+
+void ResetGame() {
+    tail = INITIAL_TAIL;
+    points = 0;
+    velocity.x = 0;
+    velocity.y = 0;
+    player.x = INITIAL_PLAYER.x;
+    player.y = INITIAL_PLAYER.y;
+    fruit.x = 1;
+    fruit.y = 1;
+    lastAction = ActionEnum::none;
+    trail.clear();
+    trail.push_back({ player.x, player.y });
+}
+
+void RandomFruit() {
+    fruit.x = std::rand() % tileCount;
+    fruit.y = std::rand() % tileCount;
+}
+
+void GameLoop() {
+    player.x += velocity.x;
+    player.y += velocity.y;
+
+    if (velocity.y == -1) lastAction = ActionEnum::up;
+    if (velocity.y == 1) lastAction = ActionEnum::down;
+    if (velocity.x == -1) lastAction = ActionEnum::left;
+    if (velocity.x == 1) lastAction = ActionEnum::right;
+
+    trail.push_back({player.x, player.y});
+    while (trail.size() > tail) trail.erase(trail.begin());
+
+    if (player.x == fruit.x && player.y == fruit.y) {
+        if (!fixedTail) tail++;
+        points++;
+        if (points > pointsMax) pointsMax = points;
+        RandomFruit();
+    }
+
+    // Logica para redefinir jogo se colidir com rastro
+    for (auto& segment : trail) {
+        if (segment.x == player.x && segment.y == player.y && &segment != &trail.back()) {
+            ResetGame();
+            break;
+        }
+    }
+}
+
+void MoveUp() {
+    if (lastAction != ActionEnum::down) {
+        velocity.x = 0;
+        velocity.y = -1;
+    }
+}
+
+void MoveDown() {
+    if (lastAction != ActionEnum::up) {
+        velocity.x = 0;
+        velocity.y = 1;
+    }
+}
+
+void MoveLeft() {
+    if (lastAction != ActionEnum::right) {
+        velocity.x = -1;
+        velocity.y = 0;
+    }
+}
+
+void MoveRight() {
+    if (lastAction != ActionEnum::left) {
+        velocity.x = 1;
+        velocity.y = 0;
+    }
+}
+
+int main() {
+    std::srand(std::time(nullptr));
+    ResetGame();
+
+    // Loop principal do jogo (simulação simplificada)
+    while (true) {
+        GameLoop();
+        // Adicione a lógica de entrada do teclado e renderização gráfica aqui
+    }
+
+    return 0;
+}
